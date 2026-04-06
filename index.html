@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FieldOps</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0e12;
+  --surface: #13161d;
+  --card: #1a1e28;
+  --card2: #1f2535;
+  --border: #272c3d;
+  --border2: #323849;
+  --text: #e8eaf2;
+  --text2: #9ba3b8;
+  --text3: #5a6180;
+  --accent: #ff6b2b;
+  --accent2: #ff9255;
+  --blue: #4f8ef7;
+  --green: #2ecc8a;
+  --yellow: #f5c518;
+  --red: #ff4757;
+  --mono: 'DM Mono', monospace;
+  --font: 'Outfit', sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Noise texture overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 52px;
+  background: rgba(13,15,19,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logo-dot {
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse-dot 2s ease infinite;
+}
+@keyframes pulse-dot { 0%,100%{box-shadow:0 0 8px var(--accent)} 50%{box-shadow:0 0 16px var(--accent)} }
+
+.tab-group {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  margin-left: 12px;
+}
+
+.tab-btn {
+  padding: 5px 16px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text2); }
+.tab-btn.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255,107,43,0.4);
+}
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(46,204,138,0.1);
+  border: 1px solid rgba(46,204,138,0.25);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  font-family: var(--mono);
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: blink 1.5s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* ── VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ══════════════════════════════
+   SALE VIEW
+══════════════════════════════ */
+.sale-view {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+
+/* Hero banner */
+.sale-banner {
+  background: linear-gradient(135deg, #1a1e28 0%, #1f2535 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.sale-banner::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(255,107,43,0.2) 0%, transparent 70%);
+}
+
+.sale-banner::after {
+  content: '';
+  position: absolute;
+  bottom: -20px; left: 30%;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, rgba(79,142,247,0.15) 0%, transparent 70%);
+}
+
+.sale-banner-inner { position: relative; }
+
+.greeting {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.greeting span { color: var(--accent); }
+
+.sale-banner p {
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 300;
+}
+
+/* Name row */
+.field-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.field-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.field-input {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.field-input:focus { border-color: var(--accent); }
+.field-input::placeholder { color: var(--text3); font-weight: 400; }
+
+/* Drop zone */
+.drop-zone {
+  background: var(--card);
+  border: 2px dashed var(--border2);
+  border-radius: 20px;
+  padding: 44px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.drop-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,107,43,0.06) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.drop-zone:hover, .drop-zone.drag {
+  border-color: var(--accent);
+  background: rgba(255,107,43,0.04);
+}
+.drop-zone:hover::before, .drop-zone.drag::before { opacity: 1; }
+
+.dz-icon {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(255,107,43,0.35);
+  transition: transform 0.3s;
+}
+.drop-zone:hover .dz-icon { transform: scale(1.05) rotate(-3deg); }
+
+.dz-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+
+.dz-sub { color: var(--text3); font-size: 13px; font-weight: 300; }
+.dz-sub strong { color: var(--accent2); font-weight: 500; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none;
+  font-family: var(--font);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-accent {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 4px 16px rgba(255,107,43,0.35);
+}
+.btn-accent:hover { background: #e85a1e; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,107,43,0.4); }
+.btn-green {
+  background: var(--green);
+  color: #0c1a12;
+  font-weight: 700;
+}
+.btn-green:hover { background: #27b87a; transform: translateY(-1px); }
+.btn-ghost {
+  background: var(--card2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--border); color: var(--text); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+/* Queue */
+.queue-section { margin-top: 20px; }
+
+.queue-toolbar {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+
+.queue-info {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+
+.prog-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  display: none;
+}
+.prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--blue));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.img-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.img-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.img-card.processing { border-color: var(--accent); box-shadow: 0 0 12px rgba(255,107,43,0.15); }
+.img-card.done { border-color: var(--green); box-shadow: 0 0 12px rgba(46,204,138,0.1); }
+.img-card.error { border-color: var(--red); }
+
+.img-thumb { width: 100%; height: 96px; object-fit: cover; display: block; }
+
+.img-meta { padding: 8px 10px; }
+.img-fname { font-size: 10px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--mono);
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.pill-wait { background: var(--card2); color: var(--text3); }
+.pill-proc { background: rgba(255,107,43,0.15); color: var(--accent); }
+.pill-done { background: rgba(46,204,138,0.15); color: var(--green); }
+.pill-err  { background: rgba(255,71,87,0.15);  color: var(--red); }
+.pill-proc::before { content: ''; width:5px;height:5px;border-radius:50%;background:var(--accent);animation:blink 1s infinite; }
+.pill-done::before { content: '✓'; }
+.pill-err::before  { content: '✗'; }
+
+/* ══════════════════════════════
+   MANAGER VIEW
+══════════════════════════════ */
+.mgr-view {
+  padding: 24px 20px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.mgr-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mgr-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+.mgr-sub { color: var(--text3); font-size: 13px; margin-top: 4px; }
+
+.hdr-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* KPI row */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media(max-width:700px){ .kpi-row{grid-template-columns:repeat(2,1fr);} }
+
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+}
+.kpi-card:nth-child(1)::before { background: var(--accent); }
+.kpi-card:nth-child(2)::before { background: var(--blue); }
+.kpi-card:nth-child(3)::before { background: var(--green); }
+.kpi-card:nth-child(4)::before { background: var(--yellow); }
+
+.kpi-val {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.kpi-lbl { font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-val.orange { color: var(--accent); }
+.kpi-val.blue   { color: var(--blue); }
+.kpi-val.green  { color: var(--green); }
+.kpi-val.yellow { color: var(--yellow); }
+
+/* Filter pills */
+.filter-row {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.fpill {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text2);
+  font-family: var(--font);
+}
+.fpill:hover { border-color: var(--accent); color: var(--accent); }
+.fpill.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+/* Main grid */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 14px;
+}
+@media(max-width:900px){ .main-grid{grid-template-columns:1fr;} }
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.panel-badge {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text3);
+}
+
+/* Map area */
+.map-area {
+  height: 360px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text3);
+  font-size: 13px;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-empty-icon { font-size: 44px; opacity: 0.4; }
+
+#mapLinks {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.map-point {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s;
+  text-decoration: none;
+  color: var(--text);
+}
+.map-point:hover { background: var(--card2); }
+.map-point:last-child { border-bottom: none; }
+
+.mp-num {
+  width: 26px; height: 26px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  color: white;
+}
+
+.mp-info { flex: 1; min-width: 0; }
+.mp-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.mp-addr { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.mp-time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent2);
+  flex-shrink: 0;
+}
+
+/* Table */
+.table-scroll { overflow-x: auto; max-height: 360px; overflow-y: auto; }
+.table-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+.table-scroll::-webkit-scrollbar-track { background: var(--surface); }
+.table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky; top: 0;
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(39,44,61,0.6);
+  vertical-align: middle;
+}
+
+tr:last-child td { border-bottom: none; }
+tbody tr { transition: background 0.15s; }
+tbody tr:hover { background: var(--card2); }
+
+.td-num { color: var(--text3); font-family: var(--mono); font-size: 10px; }
+.td-sale { font-weight: 600; font-size: 13px; }
+.td-addr { color: var(--text2); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.td-coord { font-family: var(--mono); font-size: 10px; color: var(--blue); }
+.td-time { font-family: var(--mono); font-size: 11px; color: var(--accent2); }
+
+.map-icon-btn {
+  width: 26px; height: 26px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.map-icon-btn:hover { background: var(--accent); border-color: var(--accent); }
+
+.empty-table {
+  padding: 44px;
+  text-align: center;
+  color: var(--text3);
+}
+.empty-table .icon { font-size: 36px; margin-bottom: 10px; display: block; opacity: 0.4; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 11px 22px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 9998;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    FieldOps
+  </div>
+  <div class="tab-group">
+    <button class="tab-btn active" onclick="goTab('sale',this)">📱 Sale</button>
+    <button class="tab-btn" onclick="goTab('mgr',this)">📊 Manager</button>
+  </div>
+  <div class="topbar-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span id="liveCount">0 check-in</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SALE VIEW ══ -->
+<div class="view active" id="view-sale">
+<div class="sale-view">
+
+  <div class="sale-banner">
+    <div class="sale-banner-inner">
+      <div class="greeting">Chào buổi sáng! <span>☀️</span></div>
+      <p>Upload ảnh Timemark – hệ thống tự đọc địa chỉ, tọa độ & giờ check-in</p>
+    </div>
+  </div>
+
+  <!-- API Key -->
+  <div id="apiKeySection" style="margin-bottom:16px">
+    <div style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:16px 18px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:14px">🔑</span>
+        <span style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px">Anthropic API Key</span>
+        <span id="keyStatus" style="margin-left:auto;font-size:11px;font-family:var(--mono);color:var(--text3)">Chưa có key</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input class="field-input" id="apiKeyInput" type="password" placeholder="sk-ant-..." style="flex:1;font-family:var(--mono);font-size:12px">
+        <button class="btn btn-accent" onclick="saveKey()" style="padding:10px 16px;font-size:13px">Lưu</button>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3)">
+        Lấy key tại <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent2)">console.anthropic.com</a> · Key được lưu trên máy bạn, không gửi đi đâu khác
+      </div>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-group">
+      <div class="field-label">Tên sale</div>
+      <input class="field-input" id="saleName" placeholder="Nguyễn Văn A">
+    </div>
+    <div class="field-group" style="max-width:160px">
+      <div class="field-label">Ngày</div>
+      <input class="field-input" id="saleDate" type="date">
+    </div>
+  </div>
+
+  <label for="fileInput" style="display:block;cursor:pointer">
+  <div class="drop-zone" id="dropZone">
+    <div class="dz-icon">📸</div>
+    <div class="dz-title">Upload ảnh Timemark</div>
+    <div class="dz-sub">Kéo thả hoặc click · Nhiều ảnh cùng lúc</div>
+    <div class="dz-sub" style="margin-top:6px">Tự đọc <strong>địa chỉ · tọa độ · thời gian</strong></div>
+  </div>
+  </label>
+  <input type="file" id="fileInput" multiple accept="image/*" style="opacity:0;position:absolute;width:1px;height:1px" onchange="handleFiles(this.files)">
+  <label for="fileInput" style="display:block;margin-top:12px">
+    <div style="background:var(--accent);color:white;text-align:center;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,107,43,0.35)">
+      📁 Chọn ảnh từ điện thoại
+    </div>
+  </label>
+
+  <div class="queue-section" id="queueSection" style="display:none">
+    <div class="queue-toolbar" style="margin-top:16px">
+      <button class="btn btn-accent" id="processBtn" onclick="processAll()">⚡ Trích xuất tất cả</button>
+      <button class="btn btn-ghost" onclick="clearAll()">🗑 Xóa</button>
+      <span class="queue-info" id="queueInfo"></span>
+    </div>
+    <div class="prog-bar" id="progBar"><div class="prog-fill" id="progFill"></div></div>
+    <div class="img-grid" id="imgGrid"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══ MANAGER VIEW ══ -->
+<div class="view" id="view-mgr">
+<div class="mgr-view">
+
+  <div class="mgr-header">
+    <div>
+      <div class="mgr-title">Dashboard Thị Trường</div>
+      <div class="mgr-sub" id="mgrDate"></div>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn btn-ghost" onclick="exportCSV()">⬇️ CSV</button>
+      <button class="btn btn-ghost" onclick="clearData()">🗑 Xóa data</button>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-val orange" id="kTotal">0</div><div class="kpi-lbl">Tổng check-in</div></div>
+    <div class="kpi-card"><div class="kpi-val blue" id="kSales">0</div><div class="kpi-lbl">Sale hoạt động</div></div>
+    <div class="kpi-card"><div class="kpi-val green" id="kFirst">—</div><div class="kpi-lbl">Đầu tiên</div></div>
+    <div class="kpi-card"><div class="kpi-val yellow" id="kLast">—</div><div class="kpi-lbl">Gần nhất</div></div>
+  </div>
+
+  <div class="filter-row" id="filterRow">
+    <button class="fpill active" onclick="setFilter('all',this)">Tất cả</button>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- Left: map points list -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📍 Điểm check-in</div>
+        <div class="panel-badge" id="mapBadge">0 điểm</div>
+      </div>
+      <div class="map-area" id="mapArea">
+        <div class="map-empty-icon">🗺️</div>
+        <span>Chưa có dữ liệu check-in</span>
+      </div>
+    </div>
+
+    <!-- Right: table -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📋 Danh sách</div>
+        <div class="panel-badge" id="tableBadge">0 bản ghi</div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Sale</th>
+              <th>Địa chỉ</th>
+              <th>Tọa độ</th>
+              <th>Giờ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="6"><div class="empty-table"><span class="icon">📭</span>Chưa có dữ liệu</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+const STORE_KEY = 'fieldops_v1';
+let checkins = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+let queueFiles = [];
+let processing = false;
+let activeFilter = 'all';
+
+// ── API Key ──
+const KEY_STORE = 'fieldops_apikey';
+
+function saveKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val.startsWith('sk-ant-')) { toast('⚠️ Key không hợp lệ, phải bắt đầu bằng sk-ant-'); return; }
+  localStorage.setItem(KEY_STORE, val);
+  updateKeyStatus();
+  toast('✅ Đã lưu API key!');
+}
+
+function getKey() { return localStorage.getItem(KEY_STORE) || ''; }
+
+function updateKeyStatus() {
+  const key = getKey();
+  const el = document.getElementById('keyStatus');
+  if (key) {
+    el.textContent = '✓ Đã có key';
+    el.style.color = 'var(--green)';
+    document.getElementById('apiKeyInput').value = key;
+  } else {
+    el.textContent = 'Chưa có key';
+    el.style.color = 'var(--text3)';
+  }
+}
+
+// ── Init ──
+const today = new Date();
+document.getElementById('saleDate').value = today.toISOString().split('T')[0];
+document.getElementById('mgrDate').textContent =
+  today.toLocaleDateString('vi-VN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+updateKeyStatus();
+updateLive();
+
+// ── Tab switch ──
+function goTab(tab, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  el.classList.add('active');
+  if (tab === 'mgr') renderDashboard();
+}
+
+// ── Drag & Drop ──
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleFiles(e.dataTransfer.files); });
+
+// ── File handling ──
+function handleFiles(newFiles) {
+  const arr = Array.from(newFiles);
+  queueFiles = [...queueFiles, ...arr];
+  renderQueue();
+  document.getElementById('queueSection').style.display = 'block';
+}
+
+function renderQueue() {
+  const grid = document.getElementById('imgGrid');
+  grid.innerHTML = '';
+  queueFiles.forEach((f, i) => {
+    const url = URL.createObjectURL(f);
+    const card = document.createElement('div');
+    card.className = 'img-card';
+    card.id = `card-${i}`;
+    card.innerHTML = `
+      <img class="img-thumb" src="${url}">
+      <div class="img-meta">
+        <div class="img-fname">${f.name}</div>
+        <span class="status-pill pill-wait" id="pill-${i}">Chờ</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+  document.getElementById('queueInfo').textContent = `${queueFiles.length} ảnh`;
+}
+
+function clearAll() {
+  queueFiles = [];
+  document.getElementById('imgGrid').innerHTML = '';
+  document.getElementById('queueSection').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+}
+
+// ── Process ──
+async function processAll() {
+  if (processing || queueFiles.length === 0) return;
+
+  const name = document.getElementById('saleName').value.trim();
+  const date = document.getElementById('saleDate').value;
+  if (!name) { toast('⚠️ Vui lòng nhập tên sale'); return; }
+  const apiKey = getKey();
+  if (!apiKey) { toast('⚠️ Vui lòng nhập API key trước'); return; }
+
+  processing = true;
+  document.getElementById('processBtn').disabled = true;
+  document.getElementById('processBtn').textContent = '⏳ Đang xử lý...';
+  document.getElementById('progBar').style.display = 'block';
+
+  for (let i = 0; i < queueFiles.length; i++) {
+    await processOne(queueFiles[i], i, name, date);
+    const pct = ((i + 1) / queueFiles.length * 100).toFixed(0);
+    document.getElementById('progFill').style.width = pct + '%';
+  }
+
+  processing = false;
+  document.getElementById('processBtn').disabled = false;
+  document.getElementById('processBtn').textContent = '✅ Hoàn thành';
+  updateLive();
+  toast('✅ Xử lý xong ' + queueFiles.length + ' ảnh!');
+}
+
+async function processOne(file, idx, saleName, saleDate) {
+  const pill = document.getElementById(`pill-${idx}`);
+  const card = document.getElementById(`card-${idx}`);
+
+  pill.className = 'status-pill pill-proc';
+  pill.textContent = 'Đang đọc';
+  card.className = 'img-card processing';
+
+  try {
+    const b64 = await toB64(file);
+    const mt = file.type || 'image/jpeg';
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': getKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mt, data: b64 } },
+            { type: 'text', text: `Đây là ảnh Timemark Camera. Đọc và trích xuất thông tin, trả về JSON (không markdown, không preamble):
+{"address":"địa chỉ đầy đủ","lat":"số vĩ độ","lng":"số kinh độ","time":"HH:MM","date":"DD/MM/YYYY"}
+Nếu không đọc được field nào thì để null.` }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = (data.content || []).map(c => c.text || '').join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    const checkin = {
+      id: Date.now() + idx,
+      sale: saleName,
+      date: saleDate,
+      file: file.name,
+      address: parsed.address || null,
+      lat: parsed.lat || null,
+      lng: parsed.lng || null,
+      time: parsed.time || null,
+      raw_date: parsed.date || null,
+      created: new Date().toISOString()
+    };
+
+    checkins.push(checkin);
+    localStorage.setItem(STORE_KEY, JSON.stringify(checkins));
+
+    pill.className = 'status-pill pill-done';
+    pill.textContent = 'Xong';
+    card.className = 'img-card done';
+
+  } catch(e) {
+    pill.className = 'status-pill pill-err';
+    pill.textContent = 'Lỗi';
+    card.className = 'img-card error';
+  }
+}
+
+function toB64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ── Dashboard ──
+function getFiltered() {
+  if (activeFilter === 'all') return checkins;
+  return checkins.filter(c => c.sale === activeFilter);
+}
+
+function renderDashboard() {
+  const data = getFiltered();
+  const sales = [...new Set(checkins.map(c => c.sale))];
+  const times = data.filter(c => c.time).map(c => c.time).sort();
+
+  document.getElementById('kTotal').textContent = data.length;
+  document.getElementById('kSales').textContent = [...new Set(data.map(c => c.sale))].length;
+  document.getElementById('kFirst').textContent = times[0] || '—';
+  document.getElementById('kLast').textContent = times[times.length - 1] || '—';
+
+  // Filter pills
+  const fr = document.getElementById('filterRow');
+  fr.innerHTML = `<button class="fpill ${activeFilter==='all'?'active':''}" onclick="setFilter('all',this)">Tất cả (${checkins.length})</button>`;
+  sales.forEach(s => {
+    const cnt = checkins.filter(c => c.sale === s).length;
+    const isActive = activeFilter === s;
+    const btn = document.createElement('button');
+    btn.className = 'fpill' + (isActive ? ' active' : '');
+    btn.textContent = `${s} (${cnt})`;
+    btn.onclick = function() { setFilter(s, this); };
+    fr.appendChild(btn);
+  });
+
+  renderMap(data);
+  renderTable(data);
+  updateLive();
+}
+
+function setFilter(val, el) {
+  activeFilter = val;
+  document.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderDashboard();
+}
+
+function renderMap(data) {
+  const area = document.getElementById('mapArea');
+  document.getElementById('mapBadge').textContent = data.length + ' điểm';
+
+  if (data.length === 0) {
+    area.innerHTML = `<div class="map-empty-icon">🗺️</div><span>Chưa có dữ liệu</span>`;
+    return;
+  }
+
+  const colors = ['#ff6b2b','#4f8ef7','#2ecc8a','#f5c518','#ff4757','#a55eea'];
+  const saleColors = {};
+  [...new Set(data.map(c => c.sale))].forEach((s, i) => saleColors[s] = colors[i % colors.length]);
+
+  area.innerHTML = `<div id="mapLinks" style="width:100%;height:100%;overflow-y:auto;"></div>`;
+  const container = document.getElementById('mapLinks');
+
+  data.forEach((c, i) => {
+    const mapsUrl = c.lat && c.lng ? `https://www.google.com/maps?q=${c.lat},${c.lng}` : null;
+    const el = document.createElement('a');
+    el.className = 'map-point';
+    el.href = mapsUrl || '#';
+    if (mapsUrl) el.target = '_blank';
+    el.innerHTML = `
+      <div class="mp-num" style="background:${saleColors[c.sale]}">${i+1}</div>
+      <div class="mp-info">
+        <div class="mp-name">${c.sale}</div>
+        <div class="mp-addr">${c.address || 'Không đọc được địa chỉ'}</div>
+      </div>
+      <div class="mp-time">${c.time || '—'}</div>`;
+    container.appendChild(el);
+  });
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  document.getElementById('tableBadge').textContent = data.length + ' bản ghi';
+
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-table"><span class="icon">📭</span>Chưa có dữ liệu</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = '';
+  data.forEach((c, i) => {
+    const mapsUrl = c.lat && c.lng ? `https://www.google.com/maps?q=${c.lat},${c.lng}` : null;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-num">${i+1}</td>
+      <td class="td-sale">${c.sale}</td>
+      <td class="td-addr" title="${c.address||''}">${c.address || '—'}</td>
+      <td class="td-coord">${c.lat && c.lng ? `${parseFloat(c.lat).toFixed(4)}, ${parseFloat(c.lng).toFixed(4)}` : '—'}</td>
+      <td class="td-time">${c.time || '—'}</td>
+      <td>${mapsUrl ? `<a class="map-icon-btn" href="${mapsUrl}" target="_blank">🗺️</a>` : '—'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateLive() {
+  document.getElementById('liveCount').textContent = checkins.length + ' check-in';
+}
+
+// ── Export ──
+function exportCSV() {
+  const data = getFiltered();
+  if (data.length === 0) { toast('Chưa có dữ liệu để xuất'); return; }
+  const header = ['STT','Sale','Ngày','Địa chỉ','Vĩ độ','Kinh độ','Giờ','File'];
+  const rows = data.map((c, i) => [
+    i+1, c.sale, c.date, `"${c.address||''}"`, c.lat||'', c.lng||'', c.time||'', c.file
+  ]);
+  const csv = '\uFEFF' + [header, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `fieldops-${new Date().toLocaleDateString('vi')}.csv`;
+  a.click();
+  toast('✅ Đã xuất CSV!');
+}
+
+function clearData() {
+  if (!confirm('Xóa toàn bộ dữ liệu check-in?')) return;
+  checkins = [];
+  localStorage.removeItem(STORE_KEY);
+  activeFilter = 'all';
+  renderDashboard();
+  updateLive();
+  toast('🗑 Đã xóa toàn bộ dữ liệu');
+}
+
+// ── Toast ──
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
